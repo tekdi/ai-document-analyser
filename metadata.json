@@ -1,0 +1,6 @@
+{
+  "name": "RFP Analyser AI",
+  "description": "An intelligent application that allows users to upload a Request for Proposal (RFP) document in PDF format and ask specific questions about its content. The AI-powered analyst provides quick and accurate answers based on the document's text.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

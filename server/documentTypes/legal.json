@@ -1,0 +1,34 @@
+{
+  "type": "legal",
+  "displayName": "Legal",
+  "sections": [
+    {
+      "key": "summary",
+      "label": "Summary",
+      "prompt": "Extract the following key details from the RFP, citing page numbers for each:",
+      "topics": [
+        {
+            "key": "caseName",
+            "label": "Case Name",
+            "prompt": "What is the case name?"
+        },
+        {
+            "key": "parties",
+            "label": "Parties Involved",
+            "prompt": "Who are the parties involved?"
+        },
+        {
+            "key": "dateOfAgreement",
+            "label": "Date of Agreement",
+            "prompt": "What is the date of agreement?"
+        }
+      ]
+    },
+    { "key": "obligations", "label": "Obligations", "prompt": "Summarize the obligations." },
+    { "key": "termination", "label": "Termination Clauses", "prompt": "Extract all termination clauses." },
+    { "key": "disputeResolution", "label": "Dispute Resolution", "prompt": "What are the dispute resolution mechanisms?" },
+    { "key": "confidentiality", "label": "Confidentiality", "prompt": "What are the confidentiality terms?" },
+    { "key": "governingLaw", "label": "Governing Law", "prompt": "What is the governing law?" },
+    { "key": "amendments", "label": "Amendments", "prompt": "How can amendments be made to the agreement?" }
+  ]
+}

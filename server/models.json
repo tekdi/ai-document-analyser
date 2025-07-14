@@ -1,0 +1,23 @@
+[
+  {
+    "id": "gemini-2.5-flash",
+    "provider": "gemini",
+    "displayName": "Gemini 2.5 Flash",
+    "description": "Google Gemini 2.5 Flash - Fast, cost-effective, and accurate for most document analysis tasks.",
+    "default": true
+  },
+  {
+    "id": "gpt-4o",
+    "provider": "openai",
+    "displayName": "OpenAI GPT-4o",
+    "description": "OpenAI GPT-4o - High-quality, general-purpose model for advanced document understanding.",
+    "default": false
+  },
+  {
+    "id": "claude-3-sonnet",
+    "provider": "claude",
+    "displayName": "Claude 3 Sonnet",
+    "description": "Anthropic Claude 3 Sonnet - Reliable for legal and compliance document analysis.",
+    "default": false
+  }
+]

@@ -1,0 +1,48 @@
+{
+  "type": "rfp",
+  "displayName": "RFP",
+  "sections": [
+    {
+      "key": "summary",
+      "label": "Summary",
+      "prompt": "Extract the following key details from the RFP, citing page numbers for each:",
+      "topics": [
+        { "key": "tenderName", "label": "Tender Name", "prompt": "What is the Tender Name?" },
+        { "key": "tenderNumber", "label": "Tender Number", "prompt": "What is the Tender Number?" },
+        { "key": "tenderType", "label": "Tender Type", "prompt": "What is the Tender Type?" },
+        { "key": "tenderDescription", "label": "Tender Description", "prompt": "What is the Tender Description?" },
+        { "key": "submissionDeadline", "label": "Submission Deadline", "prompt": "What is the Submission Deadline?" },
+        { "key": "contactInformation", "label": "Contact Information", "prompt": "What is the Contact Information?" },
+        { "key": "issuingAuthority", "label": "Issuing Authority", "prompt": "Who is the Issuing Authority?" },
+        { "key": "keyDates", "label": "Key Dates", "prompt": "List all important dates like submission deadline, pre-bid meeting, etc." },
+        { "key": "eligibilityCriteria", "label": "Eligibility Criteria", "prompt": "What are the eligibility criteria?" },
+        { "key": "emdOrBankGuarantee", "label": "EMD or Bank Guarantee", "prompt": "What is the EMD or Bank Guarantee requirement?" },
+        { "key": "exemptionsForMSME", "label": "Exemptions for MSME", "prompt": "Are there any exemptions for MSME?" },
+        { "key": "subcontractingAllowed", "label": "Subcontracting Allowed", "prompt": "Is subcontracting allowed?" },
+        { "key": "consortiumAllowed", "label": "Consortium Allowed", "prompt": "Is consortium allowed?" },
+        { "key": "minimumKeyStaff", "label": "Minimum Key Staff / Roles", "prompt": "What are the minimum key staff/roles required?" },
+        { "key": "locationOfWork", "label": "Location of Work", "prompt": "What is the location of work?" }
+      ]
+    },
+    {
+      "key": "scopeOfWork",
+      "label": "Scope of Work",
+      "prompt": "Describe the scope of work. Provide the relevant page numbers."
+    },
+    {
+      "key": "evaluationCriteria",
+      "label": "Evaluation Criteria",
+      "prompt": "List the evaluation or scoring criteria and their weights. Provide the relevant page numbers."
+    },
+    {
+      "key": "submissionRequirements",
+      "label": "Submission Requirements",
+      "prompt": "What are the submission requirements? Provide the relevant page numbers."
+    },
+    {
+      "key": "termsAndConditions",
+      "label": "Terms and Conditions",
+      "prompt": "What are the terms and conditions? Provide the relevant page numbers."
+    }
+  ]
+}
