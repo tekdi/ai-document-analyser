@@ -28,8 +28,6 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, '../dist')));
 
-//app.use(express.static(path.join(__dirname, '../dist')));
-
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });

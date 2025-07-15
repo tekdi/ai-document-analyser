@@ -13,7 +13,7 @@
         { "key": "tenderDescription", "label": "Tender Description", "prompt": "What is the Tender Description?" },
         { "key": "submissionDeadline", "label": "Submission Deadline", "prompt": "What is the Submission Deadline?" },
         { "key": "contactInformation", "label": "Contact Information", "prompt": "What is the Contact Information?" },
-        { "key": "issuingAuthority", "label": "Issuing Authority", "prompt": "Who is the Issuing Authority? Can you give summary of Market standing, Credit history, Latest news, Good or bad, related to this issuing authority? " },
+        { "key": "issuingAuthority", "label": "Issuing Authority", "prompt": "Who is the Issuing Authority? Can you give summary of Market standing, Credit history, Latest news, Good or bad, related to this issuing authority?" },
         { "key": "keyDates", "label": "Key Dates", "prompt": "List all important dates like submission deadline, pre-bid meeting, etc." },
         { "key": "eligibilityCriteria", "label": "Eligibility Criteria", "prompt": "What are the eligibility criteria?" },
         { "key": "emdOrBankGuarantee", "label": "EMD or Bank Guarantee", "prompt": "What is the EMD or Bank Guarantee requirement? If EMD or Bank Guarantee is asked for flash it in red color" },

@@ -52,7 +52,7 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
         <div className="h-full overflow-y-auto p-6">
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {entries.map(({ label, value }) => (
-                    <div key={label} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <div key={label} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md">
                         <dt className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</dt>
                         <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
                             <ReactMarkdown>{value}</ReactMarkdown>

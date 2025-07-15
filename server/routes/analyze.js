@@ -65,10 +65,15 @@ router.post('/', async (req, res) => {
   // Cache key includes documentText, documentType, and modelId
   const cacheKey = getHash(documentText + '|' + documentType + '|' + modelId);
 
-  // Check cache (memory, then filesystem)
-  const cached = readCache(cacheKey);
-  if (cached) {
-    return res.json(cached);
+  // Check for Cache-Control: no-cache header
+  const noCache = req.header('cache-control') && req.header('cache-control').toLowerCase().includes('no-cache');
+
+  // Only serve from cache if no 'no-cache' directive
+  if (!noCache) {
+    const cached = readCache(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
   }
 
   const analysisResult = {};
