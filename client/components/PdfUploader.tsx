@@ -154,6 +154,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
             {documentTypes.map(dt => (
               <option key={dt.type} value={dt.type}>{dt.displayName}</option>
             ))}
+            <option value="auto" disabled>Auto</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
