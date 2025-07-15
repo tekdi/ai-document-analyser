@@ -4,7 +4,7 @@
   "sections": [
     {
       "key": "summary",
-      "label": "Summary",
+      "label": "RFP Summary",
       "prompt": "Extract the following key details from the RFP, citing page numbers for each:",
       "topics": [
         { "key": "tenderName", "label": "Tender Name", "prompt": "What is the Tender Name?" },
@@ -16,33 +16,50 @@
         { "key": "issuingAuthority", "label": "Issuing Authority", "prompt": "Who is the Issuing Authority?" },
         { "key": "keyDates", "label": "Key Dates", "prompt": "List all important dates like submission deadline, pre-bid meeting, etc." },
         { "key": "eligibilityCriteria", "label": "Eligibility Criteria", "prompt": "What are the eligibility criteria?" },
-        { "key": "emdOrBankGuarantee", "label": "EMD or Bank Guarantee", "prompt": "What is the EMD or Bank Guarantee requirement?" },
-        { "key": "exemptionsForMSME", "label": "Exemptions for MSME", "prompt": "Are there any exemptions for MSME?" },
-        { "key": "subcontractingAllowed", "label": "Subcontracting Allowed", "prompt": "Is subcontracting allowed?" },
-        { "key": "consortiumAllowed", "label": "Consortium Allowed", "prompt": "Is consortium allowed?" },
-        { "key": "minimumKeyStaff", "label": "Minimum Key Staff / Roles", "prompt": "What are the minimum key staff/roles required?" },
+        { "key": "emdOrBankGuarantee", "label": "EMD or Bank Guarantee", "prompt": "What is the EMD or Bank Guarantee requirement? If EMD or Bank Guarantee is asked for flash it in red color" },
+        { "key": "exemptionsForMSME", "label": "Exemptions for MSME", "prompt": "Are there any exemptions for MSME? If its not allowed show it in Red Flashing color" },
+        { "key": "subcontractingAllowed", "label": "Subcontracting Allowed", "prompt": "Is subcontracting allowed? If its not allowed show it in Red Flashing color" },
+        { "key": "consortiumAllowed", "label": "Consortium Allowed", "prompt": "Is consortium allowed? If its not allowed show it in Red Flashing color" },
+        { "key": "minimumKeyStaff", "label": "Minimum Key Staff / Roles", "prompt": "What are the minimum key staff/roles required? Is this RFP for staff augmentation ? Check if CVs are supposed to be submitted along with this RFP?" },
         { "key": "locationOfWork", "label": "Location of Work", "prompt": "What is the location of work?" }
+        { "key": "slaPenalty", "label": "Any Penaly related clause", "prompt": "Is there any clause which can lead to penalty payment? If yes show it in Red Flashing color" }
+
       ]
+    },
+    {
+      "key": "bidPlan",
+      "label": "Bid Submission Plan",
+      "prompt": "List the detail bid submission plan including dates for 1. Bid open 2. Bid acknowledegement 3. Pre bid queries submission 4. Pre bid query discussion call 5. Pre bid query resoultion date 6. Bid submission date 7. Technical bid open 8. Interview date 9. Financial bid open 10. Vendor finalisation 11. Project start. Provide the relevant page numbers."
     },
     {
       "key": "scopeOfWork",
       "label": "Scope of Work",
-      "prompt": "Describe the scope of work. Provide the relevant page numbers."
+      "prompt": "Describe the scope of work. Provide the relevant page numbers. Mention the scope of works in terms of 1. Functional Scope 2. Technical scope 3. Infrastructure requirement 4. Non Functional requirements"
     },
     {
       "key": "evaluationCriteria",
       "label": "Evaluation Criteria",
-      "prompt": "List the evaluation or scoring criteria and their weights. Provide the relevant page numbers."
+      "prompt": "List the evaluation or scoring criteria and their weights. Provide the relevant page numbers. Also categorise the evaluation criteria as Organisation level, Solution level and Commercial level. Give a guess of how much Tekdi technologies meets these criteria."
     },
     {
       "key": "submissionRequirements",
       "label": "Submission Requirements",
-      "prompt": "What are the submission requirements? Provide the relevant page numbers."
+      "prompt": "What are the submission requirements? List down all the documents which needs to be submited. Tag the legal document as Legal and send email to manali@tekditechnologies. Provide the relevant page numbers."
+    },
+     {
+      "key": "documentTemplates",
+      "label": "Response Document Templates",
+      "prompt": "Check if there is clear ask for submission document format like Technical response, Commercial response, Case studies, CVs etc. Create a google doc document for each of this template in the Tenders google drive. Name the document as RFP Name + Purpose of document format. "
     },
     {
       "key": "termsAndConditions",
       "label": "Terms and Conditions",
       "prompt": "What are the terms and conditions? Provide the relevant page numbers."
+    },
+     {
+      "key": "bestPractices",
+      "label": "Best Practices to be followed - AI Advise",
+      "prompt": "Please check with tools like Claud, ChatGPT, Grok, Gemini, DeepSeek what can be best practices to be followed to win such RFP. List top 10 best practices based on your gut feel. "
     }
   ]
 }
