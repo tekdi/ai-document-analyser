@@ -6,6 +6,7 @@ import detectTypeRouter from './routes/detectType.js';
 import modelsRouter from './routes/models.js';
 import documentTypesRouter from './routes/documentTypes.js';
 import healthRouter from './routes/health.js';
+import researchRouter from './routes/research.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -21,6 +22,7 @@ app.use('/api/detect-type', detectTypeRouter);
 app.use('/api/models', modelsRouter);
 app.use('/api/document-types', documentTypesRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/research', researchRouter);
 
 // Serve static files
 const __filename = fileURLToPath(import.meta.url);

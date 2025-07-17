@@ -21,7 +21,7 @@
         { "key": "subcontractingAllowed", "label": "Subcontracting Allowed", "prompt": "Is subcontracting allowed? If its not allowed show it in Red Flashing color" },
         { "key": "consortiumAllowed", "label": "Consortium Allowed", "prompt": "Is consortium allowed? If its not allowed show it in Red Flashing color" },
         { "key": "minimumKeyStaff", "label": "Minimum Key Staff / Roles", "prompt": "What are the minimum key staff/roles required? Is this RFP for staff augmentation ? Check if CVs are supposed to be submitted along with this RFP?" },
-        { "key": "locationOfWork", "label": "Location of Work", "prompt": "What is the location of work?" }
+        { "key": "locationOfWork", "label": "Location of Work", "prompt": "What is the location of work?" },
         { "key": "slaPenalty", "label": "Any Penaly related clause", "prompt": "Is there any clause which can lead to penalty payment? If yes show it in Red Flashing color" }
 
       ]

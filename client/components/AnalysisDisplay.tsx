@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { AnalysisResult, Message } from '../types';
 import { ChatInterface } from './ChatInterface';
-import { ListChecksIcon, ClipboardListIcon, AlertTriangleIcon, MessageSquareIcon } from './icons';
+import { ListChecksIcon, ClipboardListIcon, AlertTriangleIcon, MessageSquareIcon, SearchIcon } from './icons';
 import ReactMarkdown from 'react-markdown';
 
 interface AnalysisDisplayProps {
@@ -11,6 +11,8 @@ interface AnalysisDisplayProps {
     isAnswering: boolean;
     isReady: boolean;
     docType: string;
+    documentText: string; // <-- add this
+    modelId: string;      // <-- add this
 }
 
 type SectionConfig = {
@@ -32,6 +34,7 @@ const iconMap: Record<string, React.FC> = {
     penalties: AlertTriangleIcon,
     scoringCriteria: ClipboardListIcon,
     chat: MessageSquareIcon,
+    research: SearchIcon,
     // Add more mappings as needed
 };
 
@@ -77,13 +80,137 @@ const TextContent: React.FC<{ title: string, text: string }> = ({ title, text })
     );
 };
 
+// Research Tab Component
+const ResearchTab: React.FC<{ documentText: string; modelId: string }> = ({ documentText, modelId }) => {
+    const [questions, setQuestions] = useState<string[]>(['']);
+    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleQuestionChange = (idx: number, value: string) => {
+        setQuestions(qs => {
+            const updated = [...qs];
+            updated[idx] = value;
+            return updated;
+        });
+    };
+
+    const handleAddQuestion = () => {
+        setQuestions(qs => [...qs, '']);
+    };
+
+    const handleRemoveQuestion = (idx: number) => {
+        setQuestions(qs => qs.length > 1 ? qs.filter((_, i) => i !== idx) : qs);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setAnswers({});
+        try {
+            const filteredQuestions = questions.map(q => q.trim()).filter(q => q.length > 0);
+            if (filteredQuestions.length === 0) {
+                setError('Please enter at least one research question.');
+                setLoading(false);
+                return;
+            }
+            const res = await fetch('/api/research', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    documentText,
+                    modelId,
+                    questions: filteredQuestions,
+                }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to get research answers.');
+            }
+            const data = await res.json();
+            setAnswers(data.answers || {});
+        } catch (err: any) {
+            setError(err.message || 'Failed to get research answers.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="p-6 max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Research Questions (one per field):
+                    </label>
+                    {questions.map((q, idx) => (
+                        <div key={idx} className="flex items-center gap-2 mb-2">
+                            <input
+                                type="text"
+                                className="flex-1 p-2 rounded border border-slate-300 dark:bg-slate-700 dark:text-white"
+                                value={q}
+                                onChange={e => handleQuestionChange(idx, e.target.value)}
+                                placeholder={`Enter research question #${idx + 1}`}
+                                disabled={loading}
+                            />
+                            {questions.length > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveQuestion(idx)}
+                                    className="text-red-500 hover:text-red-700 px-2"
+                                    title="Remove question"
+                                    disabled={loading}
+                                >✕</button>
+                            )}
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={handleAddQuestion}
+                        className="mt-2 text-blue-600 hover:underline text-sm"
+                        disabled={loading}
+                    >
+                        + Add another question
+                    </button>
+                </div>
+                <button
+                    type="submit"
+                    className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-600"
+                    disabled={loading}
+                >
+                    {loading ? 'Researching...' : 'Ask'}
+                </button>
+            </form>
+            {error && <div className="mt-4 text-red-500">{error}</div>}
+            {Object.keys(answers).length > 0 && (
+                <div className="mt-6">
+                    <h3 className="font-semibold mb-2 text-slate-700 dark:text-slate-200">Research Answers:</h3>
+                    <ul className="space-y-4">
+                        {Object.entries(answers).map(([question, answer]) => (
+                            <li key={question} className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 shadow">
+                                <div className="font-medium mb-1 text-blue-700 dark:text-blue-300">{question}</div>
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{answer}</ReactMarkdown>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
     analysisResult,
     messages,
     onQuestionSubmit,
     isAnswering,
     isReady,
-    docType
+    docType,
+    documentText, // <-- add this
+    modelId,      // <-- add this
 }) => {
     const [docConfig, setDocConfig] = useState<DocumentTypeConfig | null>(null);
 
@@ -101,6 +228,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
         if (docType) fetchConfig();
     }, [docType]);
 
+    // Tabs: summary, ...sections, chat, research
     const sectionTabs = docConfig
         ? docConfig.sections.map(section => ({
             id: section.key,
@@ -113,7 +241,8 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
     const tabs = [
         ...sectionTabs,
-        { id: 'chat', label: 'Chat', icon: MessageSquareIcon }
+        { id: 'chat', label: 'Chat', icon: MessageSquareIcon },
+        { id: 'research', label: 'Research', icon: SearchIcon }
     ];
 
     const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
@@ -125,6 +254,15 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
     const renderContent = () => {
         if (activeTab === 'chat') {
             return <ChatInterface messages={messages} onQuestionSubmit={onQuestionSubmit} isAnswering={isAnswering} isReady={isReady} />;
+        }
+        if (activeTab === 'research') {
+            // You may want to pass actual modelId and documentText from parent or context
+            return (
+                <ResearchTab
+                    documentText={documentText}
+                    modelId={modelId}
+                />
+            );
         }
         if (!docConfig) {
             return <div className="p-6 text-slate-500 dark:text-slate-400">Loading document configuration...</div>;
@@ -142,7 +280,12 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex border-b border-slate-200 dark:border-slate-700 px-4" role="tablist" aria-label="Document Analysis">
+            <div
+                className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 border-b border-slate-200 dark:border-slate-700 px-4"
+                role="tablist"
+                aria-label="Document Analysis"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+            >
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
@@ -155,6 +298,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         aria-controls={`tabpanel-${tab.id}`}
+                        style={{ minWidth: '120px' }}
                     >
                         <tab.icon />
                         {tab.label}

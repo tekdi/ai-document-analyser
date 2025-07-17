@@ -20,6 +20,7 @@ export default function App(): React.ReactNode {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
   const [selectedDocType, setSelectedDocType] = useState(documentTypes[0].type);
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
 
   const handlePdfUpload = useCallback(async (file: File, docType: string, modelId: string) => {
     setStatus('processing');
@@ -29,6 +30,7 @@ export default function App(): React.ReactNode {
     setMessages([]);
     setAnalysisResult(null);
     setSelectedDocType(docType);
+    setSelectedModelId(modelId);
 
     try {
       if (typeof pdfjsLib === 'undefined') {
@@ -122,8 +124,10 @@ export default function App(): React.ReactNode {
           messages={messages}
           onQuestionSubmit={handleQuestionSubmit}
           isAnswering={isAnswering}
-          isReady={!!pdfText}
+          isReady={status === 'ready'}
           docType={selectedDocType}
+          documentText={pdfText}
+          modelId={selectedModelId}
         />
       );
     }
