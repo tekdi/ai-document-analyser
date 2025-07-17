@@ -94,27 +94,30 @@ export default function App(): React.ReactNode {
     }
   }, []);
 
-  const handleQuestionSubmit = useCallback(async (question: string) => {
-    if (!question.trim() || isAnswering || !pdfText) return;
+  const handleQuestionSubmit = useCallback(
+    async (question: string, docType = selectedDocType, modelId = selectedModelId) => {
+      if (!question.trim() || isAnswering || !pdfText) return;
 
-    const userMessage: Message = { id: Date.now().toString(), author: MessageAuthor.USER, text: question };
-    setMessages(prev => [...prev, userMessage]);
-    setIsAnswering(true);
-    setError('');
+      const userMessage: Message = { id: Date.now().toString(), author: MessageAuthor.USER, text: question };
+      setMessages(prev => [...prev, userMessage]);
+      setIsAnswering(true);
+      setError('');
 
-    try {
-      const answer = await analysisService.answerQuestion(pdfText, question);
-      const aiMessage: Message = { id: (Date.now() + 1).toString(), author: MessageAuthor.AI, text: answer };
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (e: any) {
-      console.error("Error from backend API:", e);
-      const errorMessage = e.message || 'Sorry, I encountered an error while trying to answer. Please try again.';
-      const aiErrorMessage: Message = { id: (Date.now() + 1).toString(), author: MessageAuthor.AI, text: errorMessage };
-      setMessages(prev => [...prev, aiErrorMessage]);
-    } finally {
-      setIsAnswering(false);
-    }
-  }, [pdfText, isAnswering]);
+      try {
+        const answer = await analysisService.answerQuestion(pdfText, question, docType, modelId);
+        const aiMessage: Message = { id: (Date.now() + 1).toString(), author: MessageAuthor.AI, text: answer };
+        setMessages(prev => [...prev, aiMessage]);
+      } catch (e: any) {
+        console.error("Error from backend API:", e);
+        const errorMessage = e.message || 'Sorry, I encountered an error while trying to answer. Please try again.';
+        const aiErrorMessage: Message = { id: (Date.now() + 1).toString(), author: MessageAuthor.AI, text: errorMessage };
+        setMessages(prev => [...prev, aiErrorMessage]);
+      } finally {
+        setIsAnswering(false);
+      }
+    },
+    [pdfText, isAnswering, selectedDocType, selectedModelId]
+  );
 
   const renderContent = () => {
     if (status === 'ready' && analysisResult) {

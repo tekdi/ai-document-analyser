@@ -298,10 +298,10 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         aria-controls={`tabpanel-${tab.id}`}
-                        style={{ minWidth: '120px' }}
+                        style={{ whiteSpace: 'nowrap' }}
                     >
                         <tab.icon />
-                        {tab.label}
+                        <span className="ml-2">{tab.label}</span>
                     </button>
                 ))}
             </div>

@@ -9,14 +9,19 @@ async function handleApiResponse(response: Response) {
 }
 
 const analysisService = {
-    async answerQuestion(rfpText: string, question: string): Promise<string> {
+    async answerQuestion(pdfText: string, question: string, selectedDocType: string, selectedModelId: string): Promise<string> {
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ rfpText, question }),
+                body: JSON.stringify({
+                    documentText: pdfText,
+                    documentType: selectedDocType, 
+                    modelId: selectedModelId,       
+                    question: question,               
+    }),
             });
             const data = await handleApiResponse(response);
             return data.answer;
