@@ -280,11 +280,12 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
     return (
         <div className="flex flex-col h-full">
+            {/* Tabs Bar */}
             <div
-                className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 border-b border-slate-200 dark:border-slate-700 px-4"
+                className="flex-shrink-0 flex overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 border-b border-slate-200 dark:border-slate-700 px-4 bg-white dark:bg-slate-800"
                 role="tablist"
                 aria-label="Document Analysis"
-                style={{ WebkitOverflowScrolling: 'touch' }}
+                style={{ WebkitOverflowScrolling: 'touch', minHeight: 56, height: 56 }}
             >
                 {tabs.map(tab => (
                     <button
@@ -298,14 +299,20 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         aria-controls={`tabpanel-${tab.id}`}
-                        style={{ whiteSpace: 'nowrap' }}
+                        style={{ whiteSpace: 'nowrap', minHeight: 40 }}
                     >
                         <tab.icon />
                         <span className="ml-2">{tab.label}</span>
                     </button>
                 ))}
             </div>
-            <div id={`tabpanel-${activeTab}`} role="tabpanel" className="flex-grow overflow-hidden bg-slate-50 dark:bg-slate-800/50">
+            {/* Tab Panel */}
+            <div
+                id={`tabpanel-${activeTab}`}
+                role="tabpanel"
+                className="flex-grow overflow-y-auto bg-slate-50 dark:bg-slate-800/50"
+                style={{ minHeight: 0, height: 'calc(100vh - 56px)' }}
+            >
                 {renderContent()}
             </div>
         </div>

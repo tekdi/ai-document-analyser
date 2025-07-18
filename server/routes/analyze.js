@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
   const provider = getProvider(modelId);
 
   // Cache key includes documentText, documentType, and modelId
-  const cacheKey = getHash(documentText + '|' + documentType + '|' + modelId);
+  const cacheKey = getHash(documentText + '|' + getHash(JSON.stringify(docConfig)) + '|' + modelId);
 
   // Check for Cache-Control: no-cache header
   const noCache = req.header('cache-control') && req.header('cache-control').toLowerCase().includes('no-cache');
