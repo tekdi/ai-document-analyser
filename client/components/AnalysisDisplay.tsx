@@ -228,21 +228,28 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
         if (docType) fetchConfig();
     }, [docType]);
 
-    // Tabs: summary, ...sections, chat, research
-    const sectionTabs = docConfig
-        ? docConfig.sections.map(section => ({
-            id: section.key,
-            label: section.label,
-            icon: iconMap[section.key] || ListChecksIcon,
-        }))
-        : [
-            { id: 'summary', label: 'Summary', icon: ListChecksIcon }
-        ];
+    // Build tabs in the requested order
+    const summaryTab = { id: 'summary', label: 'Summary', icon: iconMap.summary || ListChecksIcon };
+    const researchTab = { id: 'research', label: 'Research', icon: iconMap.research || SearchIcon };
+    const chatTab = { id: 'chat', label: 'Chat', icon: iconMap.chat || MessageSquareIcon };
 
+    // Dynamically generated tabs (excluding summary)
+    const dynamicTabs = docConfig
+        ? docConfig.sections
+            .filter(section => section.key !== 'summary')
+            .map(section => ({
+                id: section.key,
+                label: section.label,
+                icon: iconMap[section.key] || ListChecksIcon,
+            }))
+        : [];
+
+    // Tabs: summary, research, chat, ...dynamicTabs
     const tabs = [
-        ...sectionTabs,
-        { id: 'chat', label: 'Chat', icon: MessageSquareIcon },
-        { id: 'research', label: 'Research', icon: SearchIcon }
+        summaryTab,
+        researchTab,
+        chatTab,
+        ...dynamicTabs,
     ];
 
     const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
