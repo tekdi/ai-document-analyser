@@ -59,7 +59,7 @@
      {
       "key": "bestPractices",
       "label": "Best Practices to be followed - AI Advise",
-      "prompt": "Please check with tools like Claud, ChatGPT, Grok, Gemini, DeepSeek what can be best practices to be followed to win such RFP. List top 10 best practices based on your gut feel. "
+      "prompt": "Please check with tools like Claud, ChatGPT, Grok, Gemini, DeepSeek what can be best practices to be followed to win such RFP. List top 10 best practices based on your gut feel. Use only scope, technology like parameters to search. Dont use any sensitive or competitive information from this RFP for search "
     }
   ]
 }
