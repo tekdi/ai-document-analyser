@@ -29,22 +29,22 @@
     {
       "key": "bidPlan",
       "label": "Bid Submission Plan",
-      "prompt": "List the detail bid submission plan including dates for 1. Bid open 2. Bid acknowledegement 3. Pre bid queries submission 4. Pre bid query discussion call 5. Pre bid query resoultion date 6. Bid submission date 7. Technical bid open 8. Interview date 9. Financial bid open 10. Vendor finalisation 11. Project start. Provide the relevant page numbers."
+      "prompt": "List the detail bid submission plan including dates for 1. Bid open 2. Bid acknowledegement 3. Pre bid queries submission 4. Pre bid query discussion call 5. Pre bid query resoultion date 6. Bid submission date 7. Technical bid open 8. Interview date 9. Financial bid open 10. Vendor finalisation 11. Project start. Provide the relevant page numbers. Have this in nice tabular format with header and formatted dates in dd/mm/yyyy hh:mm format"
     },
     {
       "key": "scopeOfWork",
       "label": "Scope of Work",
-      "prompt": "Describe the scope of work. Provide the relevant page numbers. Mention the scope of works in terms of 1. Functional Scope 2. Technical scope 3. Infrastructure requirement 4. Non Functional requirements"
+      "prompt": "Describe the scope of work. Provide the relevant page numbers. Mention the scope of works in terms of 1. Functional Scope 2. Technical scope 3. Infrastructure requirement 4. Non Functional requirements. Please have it in tabular format."
     },
     {
       "key": "evaluationCriteria",
       "label": "Evaluation Criteria",
-      "prompt": "List the evaluation or scoring criteria and their weights. Provide the relevant page numbers. Also categorise the evaluation criteria as Organisation level, Solution level and Commercial level. Give a guess of how much Tekdi technologies meets these criteria."
+      "prompt": "List the evaluation or scoring criteria and their weights. Provide the relevant page numbers. Also categorise the evaluation criteria as Organisation level, Solution level and Commercial level. Give a guess of how much Tekdi technologies meets these criteria. Please have it in tabular format"
     },
     {
       "key": "submissionRequirements",
       "label": "Submission Requirements",
-      "prompt": "What are the submission requirements? List down all the documents which needs to be submited. Tag the legal document as Legal and send email to manali@tekditechnologies. Provide the relevant page numbers."
+      "prompt": "What are the submission requirements? List down all the documents which needs to be submited in the tabular format. Tag the legal document as Legal and send email to manali@tekditechnologies."
     },
      {
       "key": "documentTemplates",
@@ -54,7 +54,7 @@
     {
       "key": "termsAndConditions",
       "label": "Terms and Conditions",
-      "prompt": "What are the terms and conditions? Provide the relevant page numbers."
+      "prompt": "What are the terms and conditions? Provide the relevant page numbers. Please create it Tabular format"
     },
      {
       "key": "bestPractices",
