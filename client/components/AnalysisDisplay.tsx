@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AnalysisResult, Message } from '../types';
 import { ChatInterface } from './ChatInterface';
 import { ListChecksIcon, ClipboardListIcon, AlertTriangleIcon, MessageSquareIcon, SearchIcon } from './icons';
@@ -11,8 +11,8 @@ interface AnalysisDisplayProps {
     isAnswering: boolean;
     isReady: boolean;
     docType: string;
-    documentText: string; // <-- add this
-    modelId: string;      // <-- add this
+    documentText: string;
+    modelId: string;
 }
 
 type SectionConfig = {
@@ -80,7 +80,6 @@ const TextContent: React.FC<{ title: string, text: string }> = ({ title, text })
     );
 };
 
-// Research Tab Component
 const ResearchTab: React.FC<{ documentText: string; modelId: string }> = ({ documentText, modelId }) => {
     const [questions, setQuestions] = useState<string[]>(['']);
     const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -138,7 +137,7 @@ const ResearchTab: React.FC<{ documentText: string; modelId: string }> = ({ docu
     };
 
     return (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-6 max-w-2xl mx-auto h-full overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -209,24 +208,16 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
     isAnswering,
     isReady,
     docType,
-    documentText, // <-- add this
-    modelId,      // <-- add this
+    documentText,
+    modelId,
 }) => {
     const [docConfig, setDocConfig] = useState<DocumentTypeConfig | null>(null);
 
-    useEffect(() => {
-        async function fetchConfig() {
-            try {
-                const res = await fetch(`/api/document-types`);
-                const allTypes: DocumentTypeConfig[] = await res.json();
-                const config = allTypes.find(dt => dt.type === docType) || null;
-                setDocConfig(config);
-            } catch (e) {
-                setDocConfig(null);
-            }
-        }
-        if (docType) fetchConfig();
-    }, [docType]);
+    // Progressive section state
+    const [sectionData, setSectionData] = useState<Record<string, any>>({});
+    const [loadingSections, setLoadingSections] = useState<Set<string>>(new Set());
+    const [loadedSections, setLoadedSections] = useState<Set<string>>(new Set());
+    const [errorSections, setErrorSections] = useState<Record<string, string>>({});
 
     // Build tabs in the requested order
     const summaryTab = { id: 'summary', label: 'Summary', icon: iconMap.summary || ListChecksIcon };
@@ -254,16 +245,114 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 
     const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
 
+    // Track which sections have been requested for loading
+    const requestedSectionsRef = useRef<Set<string>>(new Set());
+
     useEffect(() => {
         setActiveTab(tabs[0].id);
     }, [docType, tabs.length]);
+
+    // Fetch document config
+    useEffect(() => {
+        async function fetchConfig() {
+            try {
+                const res = await fetch(`/api/document-types`);
+                const allTypes: DocumentTypeConfig[] = await res.json();
+                const config = allTypes.find(dt => dt.type === docType) || null;
+                setDocConfig(config);
+            } catch (e) {
+                setDocConfig(null);
+            }
+        }
+        if (docType) fetchConfig();
+    }, [docType]);
+
+    // Helper to fetch up to 2 sections at a time
+    const fetchSections = async (sectionKeys: string[]) => {
+        if (!docConfig) return;
+        setLoadingSections(prev => new Set([...prev, ...sectionKeys]));
+        try {
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    documentText,
+                    documentType: docType,
+                    modelId,
+                    sections: sectionKeys,
+                }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Failed to analyze section(s).');
+            }
+            const data = await res.json();
+            setSectionData(prev => ({ ...prev, ...data }));
+            setLoadedSections(prev => {
+                const next = new Set(prev);
+                sectionKeys.forEach(k => next.add(k));
+                return next;
+            });
+        } catch (err: any) {
+            setErrorSections(prev => {
+                const next = { ...prev };
+                sectionKeys.forEach(k => { next[k] = err.message || 'Failed to load section.'; });
+                return next;
+            });
+        } finally {
+            setLoadingSections(prev => {
+                const next = new Set(prev);
+                sectionKeys.forEach(k => next.delete(k));
+                return next;
+            });
+        }
+    };
+
+    // On mount or docConfig change, request summary and first dynamic tab
+    useEffect(() => {
+        if (!docConfig) return;
+        const initialKeys = ['summary'];
+        if (dynamicTabs.length > 0) initialKeys.push(dynamicTabs[0].id);
+        // Only fetch if not already requested
+        const toFetch = initialKeys.filter(k => !requestedSectionsRef.current.has(k));
+        if (toFetch.length > 0) {
+            toFetch.forEach(k => requestedSectionsRef.current.add(k));
+            fetchSections(toFetch);
+        }
+    }, [docConfig, documentText, docType, modelId]);
+
+    // Prefetch all other sections in the background, 2 at a time, after initial load
+    useEffect(() => {
+        if (!docConfig) return;
+        // Exclude summary and research/chat tabs
+        const allSectionKeys = docConfig.sections.map(s => s.key).filter(k => k !== 'summary');
+        // Only fetch those not already requested
+        const toFetch = allSectionKeys.filter(k => !requestedSectionsRef.current.has(k));
+        if (toFetch.length === 0) return;
+
+        let cancelled = false;
+        const fetchInBatches = async () => {
+            for (let i = 0; i < toFetch.length; i += 2) {
+                if (cancelled) break;
+                const batch = toFetch.slice(i, i + 2);
+                batch.forEach(k => requestedSectionsRef.current.add(k));
+                await fetchSections(batch);
+            }
+        };
+        fetchInBatches();
+        return () => { cancelled = true; };
+        // eslint-disable-next-line
+    }, [docConfig, documentText, docType, modelId]);
+
+    const handleTabClick = (tabId: string) => {
+        setActiveTab(tabId);
+    };
 
     const renderContent = () => {
         if (activeTab === 'chat') {
             return <ChatInterface messages={messages} onQuestionSubmit={onQuestionSubmit} isAnswering={isAnswering} isReady={isReady} />;
         }
         if (activeTab === 'research') {
-            // You may want to pass actual modelId and documentText from parent or context
             return (
                 <ResearchTab
                     documentText={documentText}
@@ -277,11 +366,17 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
         const section = docConfig.sections.find(s => s.key === activeTab);
         if (!section) return null;
 
-        if (section.key === 'summary' && analysisResult.summary) {
-            return <SummaryContent summary={analysisResult.summary} summarySection={section} />;
+        if (loadingSections.has(activeTab)) {
+            return <div className="p-6 text-slate-500 dark:text-slate-400">Loading...</div>;
+        }
+        if (errorSections[activeTab]) {
+            return <div className="p-6 text-red-500">{errorSections[activeTab]}</div>;
+        }
+        if (activeTab === 'summary') {
+            return <SummaryContent summary={sectionData.summary} summarySection={section} />;
         }
         // For other dynamic sections, use section.key
-        const text = analysisResult[section.key];
+        const text = sectionData[activeTab];
         return <TextContent title={section.label} text={text} />;
     };
 
@@ -297,7 +392,7 @@ export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabClick(tab.id)}
                         className={`flex items-center font-semibold px-4 py-3 border-b-2 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
                             ${activeTab === tab.id
                                 ? 'border-blue-600 text-blue-600 dark:text-blue-500 dark:border-blue-500'

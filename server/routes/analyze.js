@@ -52,7 +52,7 @@ function writeCache(cacheKey, data) {
 }
 
 router.post('/', async (req, res) => {
-  const { documentText, documentType, modelId } = req.body;
+  const { documentText, documentType, modelId, sections } = req.body;
   if (!documentText || !documentType || !modelId) {
     return res.status(400).json({ error: 'documentText, documentType, and modelId are required.' });
   }
@@ -62,13 +62,15 @@ router.post('/', async (req, res) => {
 
   const provider = getProvider(modelId);
 
-  // Cache key includes documentText, documentType, and modelId
-  const cacheKey = getHash(documentText + '|' + getHash(JSON.stringify(docConfig)) + '|' + modelId);
+  // Only process requested sections (or all if not specified)
+  const requestedSections = Array.isArray(sections) && sections.length > 0
+    ? docConfig.sections.filter(s => sections.includes(s.key))
+    : docConfig.sections;
 
-  // Check for Cache-Control: no-cache header
+  // Cache key includes requested sections
+  const cacheKey = getHash(documentText + '|' + getHash(JSON.stringify(docConfig)) + '|' + modelId + '|' + JSON.stringify(sections || []));
+
   const noCache = req.header('cache-control') && req.header('cache-control').toLowerCase().includes('no-cache');
-
-  // Only serve from cache if no 'no-cache' directive
   if (!noCache) {
     const cached = readCache(cacheKey);
     if (cached) {
@@ -78,7 +80,7 @@ router.post('/', async (req, res) => {
 
   const analysisResult = {};
   try {
-    for (const section of docConfig.sections) {
+    for (const section of requestedSections) {
       if (section.key === 'summary' && section.topics) {
         analysisResult.summary = {};
         for (const topic of section.topics) {
@@ -98,7 +100,6 @@ router.post('/', async (req, res) => {
         });
       }
     }
-    // Store in both memory and filesystem cache
     writeCache(cacheKey, analysisResult);
     res.json(analysisResult);
   } catch (error) {

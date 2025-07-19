@@ -60,7 +60,22 @@ export default function App(): React.ReactNode {
           setStatus('analyzing');
 
           try {
-            const result = await analysisService.extractRfpDetails(fullTextWithPageNumbers, docType, modelId);
+            // Fetch document types from API to get the sections
+            const docTypesRes = await fetch('/api/document-types');
+            const docTypes = await docTypesRes.json();
+            const docConfig = docTypes.find((dt: any) => dt.type === docType);
+
+            let initialSections = ['summary'];
+            if (docConfig && docConfig.sections.length > 1) {
+              initialSections.push(docConfig.sections[1].key);
+            }
+
+            const result = await analysisService.extractRfpDetails(
+              fullTextWithPageNumbers,
+              docType,
+              modelId,
+              initialSections // <-- pass only the first two sections
+            );
             setAnalysisResult(result);
             setMessages([
               {

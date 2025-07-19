@@ -34,11 +34,16 @@ const analysisService = {
         }
     },
 
-    async extractRfpDetails(documentText: string, documentType: string, modelId: string) {
+    async extractRfpDetails(documentText: string, documentType: string, modelId: string, sections: string[]) {
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentText, documentType, modelId }),
+            body: JSON.stringify({
+                documentText,
+                documentType,
+                modelId,
+                sections, // always send this!
+            }),
         });
         if (!response.ok) throw new Error(await response.text());
         return response.json();
