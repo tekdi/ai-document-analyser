@@ -80,26 +80,74 @@ router.post('/', async (req, res) => {
 
   const analysisResult = {};
   try {
-    for (const section of requestedSections) {
-      if (section.key === 'summary' && section.topics) {
-        analysisResult.summary = {};
-        for (const topic of section.topics) {
-          const prompt = `${topic.prompt}\n\nDocument:\n---\n${documentText}\n---`;
-          analysisResult.summary[topic.key] = await provider.generate({
-            model: modelId,
-            prompt,
-            systemInstruction: `${section.prompt} For each, cite the page number(s) where you found the information. If not found, say "Not specified".`
-          });
-        }
-      } else {
-        const prompt = `${section.prompt}\n\nDocument:\n---\n${documentText}\n---`;
-        analysisResult[section.key] = await provider.generate({
+    // Process summary and non-summary sections concurrently
+    const summarySection = requestedSections.find(s => s.key === 'summary' && s.topics);
+    const otherSections = requestedSections.filter(s => s.key !== 'summary' || !s.topics);
+
+    const promises = [];
+
+    // Handle summary section with batched questions
+    if (summarySection) {
+      const summaryPromise = (async () => {
+        // Create structured prompt combining all summary questions
+        const questionsText = summarySection.topics.map((topic, index) => 
+          `${index + 1}. ${topic.label} (${topic.key}): ${topic.prompt}`
+        ).join('\n');
+
+        const batchedPrompt = `Please extract the following information from the RFP document and respond in JSON format. For each field, cite the page number(s) where you found the information. If not found, use "Not specified".
+
+Questions:
+${questionsText}
+
+Document:
+---
+${documentText}
+---
+
+Please respond with a JSON object where each key corresponds to the topic key in parentheses above, and each value is your answer with page citations.`;
+
+        const response = await provider.generate({
           model: modelId,
-          prompt,
-          systemInstruction: `Extract the following information and cite page numbers. If not found, say "Not specified".`
+          prompt: batchedPrompt,
+          systemInstruction: `${summarySection.prompt} Respond only with valid JSON. For each answer, cite page numbers where found. If not found, say "Not specified".`
         });
-      }
+
+        // Parse JSON response
+        try {
+          const parsedSummary = JSON.parse(response);
+          analysisResult.summary = parsedSummary;
+        } catch (parseError) {
+          console.error('Failed to parse summary JSON response:', parseError);
+          console.error('Response was:', response);
+          
+          // Fallback: use the raw response as a single summary
+          analysisResult.summary = { combined: response };
+        }
+      })();
+      promises.push(summaryPromise);
     }
+
+    // Handle other sections concurrently
+    const otherPromises = otherSections.map(async (section) => {
+      const prompt = `${section.prompt}\n\nDocument:\n---\n${documentText}\n---`;
+      const result = await provider.generate({
+        model: modelId,
+        prompt,
+        systemInstruction: `Extract the following information and cite page numbers. If not found, say "Not specified".`
+      });
+      return { key: section.key, result };
+    });
+    promises.push(...otherPromises);
+
+    // Wait for all sections to complete
+    const results = await Promise.all(promises);
+    
+    // Process non-summary results
+    results.forEach(result => {
+      if (result && typeof result === 'object' && result.key) {
+        analysisResult[result.key] = result.result;
+      }
+    });
     writeCache(cacheKey, analysisResult);
     res.json(analysisResult);
   } catch (error) {

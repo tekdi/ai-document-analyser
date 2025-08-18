@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 //import { loadConfig, getDocumentTypes, getModels } from './config.js';
 import analyzeRouter from './routes/analyze.js';
