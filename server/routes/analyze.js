@@ -112,9 +112,17 @@ Please respond with a JSON object where each key corresponds to the topic key in
           systemInstruction: `${summarySection.prompt} Respond only with valid JSON. For each answer, cite page numbers where found. If not found, say "Not specified".`
         });
 
-        // Parse JSON response
+        // Parse JSON response (handle markdown code blocks)
         try {
-          const parsedSummary = JSON.parse(response);
+          let jsonText = response;
+          
+          // Extract JSON from markdown code blocks if present
+          const jsonMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            jsonText = jsonMatch[1];
+          }
+          
+          const parsedSummary = JSON.parse(jsonText);
           analysisResult.summary = parsedSummary;
         } catch (parseError) {
           console.error('Failed to parse summary JSON response:', parseError);

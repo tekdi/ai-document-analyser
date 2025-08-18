@@ -40,11 +40,51 @@ const iconMap: Record<string, React.FC> = {
 
 const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | undefined }> = ({ summary, summarySection }) => {
     const topics = summarySection?.topics || [];
+    
+    // Check if we have individual topic keys or a combined fallback
+    const hasIndividualTopics = topics.some(topic => summary?.[topic.key]);
+    
+    if (!hasIndividualTopics && summary?.combined) {
+        // Fallback: display the combined summary as single content block
+        return (
+            <div className="h-full overflow-y-auto p-6">
+                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-li:my-1 whitespace-pre-wrap leading-relaxed">
+                    <ReactMarkdown>{summary.combined}</ReactMarkdown>
+                </div>
+            </div>
+        );
+    }
+    
+    // Standard individual topic display
     const entries = topics
-        .map(topic => ({
-            label: topic.label,
-            value: summary?.[topic.key] || ''
-        }))
+        .map(topic => {
+            const rawValue = summary?.[topic.key];
+            let displayValue = '';
+            
+            if (typeof rawValue === 'string') {
+                displayValue = rawValue;
+            } else if (rawValue && typeof rawValue === 'object') {
+                // Handle new structured format with value and page_numbers
+                if (rawValue.value) {
+                    displayValue = typeof rawValue.value === 'string' 
+                        ? rawValue.value 
+                        : JSON.stringify(rawValue.value, null, 2);
+                    
+                    // Add page references if available
+                    if (rawValue.page_numbers && Array.isArray(rawValue.page_numbers)) {
+                        displayValue += `\n\n*Found on pages: ${rawValue.page_numbers.join(', ')}*`;
+                    }
+                } else {
+                    // Fallback for other object structures
+                    displayValue = JSON.stringify(rawValue, null, 2);
+                }
+            }
+            
+            return {
+                label: topic.label,
+                value: displayValue
+            };
+        })
         .filter(entry => entry.value && entry.value.trim() !== '' && entry.value.toLowerCase() !== 'not specified');
 
     if (entries.length === 0) {
