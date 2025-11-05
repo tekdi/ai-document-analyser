@@ -37,6 +37,14 @@ The app will be available at http://localhost:8080
 - `CLAUDE_API_KEY` (optional) - For Claude models
 - `PORT` (optional) - Server port, defaults to 8080
 
+## Configuration
+
+### Document types
+The document types and the relevant prompts are set up in a json file for each document type. The folder `server/documentTypes` contains a few that you can refer and create more.
+
+### Models
+The available models are configured via `server/models.json`. Do ensure to set up the API keys via environment variables for all models that you plan to use. 
+
 ## Screenshots
 
 <img width="1280" height="688" alt="Screenshot 2025-11-05 at 3 13 39 PM" src="https://github.com/user-attachments/assets/1e3b43aa-ff5f-4917-9b0f-b0339e4b7b20" />
