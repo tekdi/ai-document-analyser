@@ -33,78 +33,129 @@ export default function App(): React.ReactNode {
     setSelectedModelId(modelId);
 
     try {
-      if (typeof pdfjsLib === 'undefined') {
-        throw new Error('pdf.js library is not loaded. Please check your internet connection and refresh.');
-      }
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      let extractedText = '';
 
-      const fileReader = new FileReader();
-      fileReader.onload = async (event) => {
-        if (!event.target?.result) {
+      // Handle different file types
+      if (fileExtension === 'pdf') {
+        // PDF processing
+        if (typeof pdfjsLib === 'undefined') {
+          throw new Error('pdf.js library is not loaded. Please check your internet connection and refresh.');
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+
+        const fileReader = new FileReader();
+        fileReader.onload = async (event) => {
+          if (!event.target?.result) {
             setError('Failed to read file.');
             setStatus('error');
             return;
-        }
-
-        try {
-          const typedArray = new Uint8Array(event.target.result as ArrayBuffer);
-          const pdf = await pdfjsLib.getDocument(typedArray).promise;
-          let fullTextWithPageNumbers = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item: any) => item.str).join(' ');
-            fullTextWithPageNumbers += `--- Page ${i} ---\n${pageText}\n\n`;
           }
-          setPdfText(fullTextWithPageNumbers);
-          setStatus('analyzing');
 
           try {
-            // Fetch document types from API to get the sections
-            const docTypesRes = await fetch('/api/document-types');
-            const docTypes = await docTypesRes.json();
-            const docConfig = docTypes.find((dt: any) => dt.type === docType);
-
-            let initialSections = ['summary'];
-            if (docConfig && docConfig.sections.length > 1) {
-              initialSections.push(docConfig.sections[1].key);
+            const typedArray = new Uint8Array(event.target.result as ArrayBuffer);
+            const pdf = await pdfjsLib.getDocument(typedArray).promise;
+            let fullTextWithPageNumbers = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map((item: any) => item.str).join(' ');
+              fullTextWithPageNumbers += `--- Page ${i} ---\n${pageText}\n\n`;
             }
-
-            const result = await analysisService.extractRfpDetails(
-              fullTextWithPageNumbers,
-              docType,
-              modelId,
-              initialSections // <-- pass only the first two sections
-            );
-            setAnalysisResult(result);
-            setMessages([
-              {
-                id: 'initial-ai-message',
-                author: MessageAuthor.AI,
-                text: `Successfully analyzed "${file.name}". Key details have been extracted with page references. You can review them in the tabs or ask me specific questions.`,
-              },
-            ]);
-            setStatus('ready');
-          } catch(e: any) {
-             console.error("Error from backend API during analysis:", e);
-             setError(e.message || 'Failed to analyze the RFP with the AI service. The document might be too complex or a server error occurred.');
-             setStatus('error');
+            await processExtractedText(fullTextWithPageNumbers);
+          } catch (e) {
+            console.error("Error parsing PDF:", e);
+            setError('Could not process the PDF file. It might be corrupted or in an unsupported format.');
+            setStatus('error');
+          }
+        };
+        fileReader.onerror = () => {
+          setError('Error reading the file.');
+          setStatus('error');
+        };
+        fileReader.readAsArrayBuffer(file);
+      } else if (['txt', 'csv', 'md'].includes(fileExtension || '')) {
+        // Text-based file processing
+        const fileReader = new FileReader();
+        fileReader.onload = async (event) => {
+          if (!event.target?.result) {
+            setError('Failed to read file.');
+            setStatus('error');
+            return;
           }
 
-        } catch (e) {
-          console.error("Error parsing PDF:", e);
-          setError('Could not process the PDF file. It might be corrupted or in an unsupported format.');
+          try {
+            let textContent = event.target.result as string;
+
+            // Format based on file type
+            if (fileExtension === 'csv') {
+              // Add a header to indicate it's CSV data
+              extractedText = `--- CSV Document ---\n${textContent}`;
+            } else if (fileExtension === 'md') {
+              // Add a header for markdown
+              extractedText = `--- Markdown Document ---\n${textContent}`;
+            } else {
+              // Plain text
+              extractedText = `--- Text Document ---\n${textContent}`;
+            }
+
+            await processExtractedText(extractedText);
+          } catch (e) {
+            console.error("Error processing text file:", e);
+            setError(`Could not process the ${fileExtension?.toUpperCase()} file.`);
+            setStatus('error');
+          }
+        };
+        fileReader.onerror = () => {
+          setError('Error reading the file.');
           setStatus('error');
-        }
-      };
-      fileReader.onerror = () => {
-        setError('Error reading the file.');
+        };
+        fileReader.readAsText(file);
+      } else {
+        setError('Unsupported file type. Please upload a PDF, TXT, CSV, or MD file.');
         setStatus('error');
       }
-      fileReader.readAsArrayBuffer(file);
+
+      // Helper function to process extracted text and send to AI
+      async function processExtractedText(text: string) {
+        setPdfText(text);
+        setStatus('analyzing');
+
+        try {
+          // Fetch document types from API to get the sections
+          const docTypesRes = await fetch('/api/document-types');
+          const docTypes = await docTypesRes.json();
+          const docConfig = docTypes.find((dt: any) => dt.type === docType);
+
+          let initialSections = ['summary'];
+          if (docConfig && docConfig.sections.length > 1) {
+            initialSections.push(docConfig.sections[1].key);
+          }
+
+          const result = await analysisService.extractRfpDetails(
+            text,
+            docType,
+            modelId,
+            initialSections
+          );
+          setAnalysisResult(result);
+          setMessages([
+            {
+              id: 'initial-ai-message',
+              author: MessageAuthor.AI,
+              text: `Successfully analyzed "${file.name}". Key details have been extracted. You can review them in the tabs or ask me specific questions.`,
+            },
+          ]);
+          setStatus('ready');
+        } catch(e: any) {
+          console.error("Error from backend API during analysis:", e);
+          setError(e.message || 'Failed to analyze the document with the AI service. The document might be too complex or a server error occurred.');
+          setStatus('error');
+        }
+      }
     } catch (e: any) {
       console.error(e);
-      setError(e.message || 'An unexpected error occurred during PDF processing.');
+      setError(e.message || 'An unexpected error occurred during document processing.');
       setStatus('error');
     }
   }, []);
@@ -150,7 +201,7 @@ export default function App(): React.ReactNode {
       );
     }
 
-    const idleText = "Ready for analysis. Please upload a PDF file to begin.";
+    const idleText = "Ready for analysis. Please upload a document to begin.";
     const processingText = `Processing "${pdfName}"...`;
     const analyzingText = `Analyzing "${pdfName}" with AI... This may take a moment.`;
     

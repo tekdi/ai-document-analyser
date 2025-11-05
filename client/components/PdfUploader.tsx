@@ -76,8 +76,12 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
     handleDragEvents(e, false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      if (files[0].type === "application/pdf") {
-        onFileUpload(files[0], selectedType, selectedModel);
+      const allowedTypes = ["application/pdf", "text/plain", "text/csv", "text/markdown"];
+      const file = files[0];
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+
+      if (allowedTypes.includes(file.type) || ['md', 'txt', 'csv'].includes(fileExtension || '')) {
+        onFileUpload(file, selectedType, selectedModel);
       }
     }
   }, [onFileUpload, handleDragEvents, selectedType, selectedModel]);
@@ -98,7 +102,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
       return (
         <div className="text-center text-blue-500 flex flex-col items-center space-y-2">
           <SpinnerIcon />
-          <span className="font-semibold">Processing PDF...</span>
+          <span className="font-semibold">Processing Document...</span>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">{fileName}</p>
         </div>
       );
@@ -127,8 +131,8 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 flex flex-col items-center space-y-2">
         <UploadIcon />
-        <span className="font-semibold">Drag & drop a PDF here</span>
-        <span className="text-xs">or click to select a file</span>
+        <span className="font-semibold">Drag & drop a document here</span>
+        <span className="text-xs">PDF, TXT, CSV, or MD files supported</span>
       </div>
     );
   };
@@ -188,7 +192,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,.txt,.csv,.md,text/plain,text/csv,text/markdown"
           className="hidden"
           onChange={handleFileChange}
           disabled={isDisabled}
@@ -199,7 +203,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
         disabled={isDisabled}
         className="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-600"
       >
-        {status === 'ready' || status === 'error' ? 'Upload Another PDF' : 'Select PDF File'}
+        {status === 'ready' || status === 'error' ? 'Upload Another Document' : 'Select Document File'}
       </button>
     </div>
   );
