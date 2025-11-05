@@ -38,6 +38,18 @@ const iconMap: Record<string, React.FC> = {
     // Add more mappings as needed
 };
 
+// Helper function to process special formatting markers
+const processSpecialFormatting = (text: string): string => {
+    if (typeof text !== 'string') return text;
+    
+    // Convert (FLASH_RED) and similar markers to HTML with red styling
+    return text
+        .replace(/\(FLASH_RED\)/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️</span>')
+        .replace(/\(RED_FLASHING\)/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️</span>')
+        .replace(/flash it in red color/gi, '<span style="color: #ef4444; font-weight: bold;">⚠️ ATTENTION</span>')
+        .replace(/show it in Red Flashing color/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️ ATTENTION</span>');
+};
+
 const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | undefined }> = ({ summary, summarySection }) => {
     const topics = summarySection?.topics || [];
     
@@ -66,9 +78,28 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
             } else if (rawValue && typeof rawValue === 'object') {
                 // Handle new structured format with value and page_numbers
                 if (rawValue.value) {
-                    displayValue = typeof rawValue.value === 'string' 
-                        ? rawValue.value 
-                        : JSON.stringify(rawValue.value, null, 2);
+                    if (typeof rawValue.value === 'string') {
+                        displayValue = processSpecialFormatting(rawValue.value);
+                    } else if (Array.isArray(rawValue.value)) {
+                        // Format arrays as markdown bullet lists
+                        displayValue = rawValue.value.map(item => {
+                            if (typeof item === 'object' && item.event && item.date) {
+                                // Special formatting for key dates with page numbers
+                                let dateText = `- **${item.event}**: ${item.date}`;
+                                if (item.page_numbers && Array.isArray(item.page_numbers)) {
+                                    dateText += ` *(Page ${item.page_numbers.join(', ')})*`;
+                                }
+                                return dateText;
+                            } else if (typeof item === 'string') {
+                                return `- ${processSpecialFormatting(item)}`;
+                            } else {
+                                return `- ${JSON.stringify(item)}`;
+                            }
+                        }).join('\n');
+                    } else {
+                        // Other object types
+                        displayValue = JSON.stringify(rawValue.value, null, 2);
+                    }
                     
                     // Add page references if available
                     if (rawValue.page_numbers && Array.isArray(rawValue.page_numbers)) {
@@ -98,7 +129,13 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
                     <div key={label} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md">
                         <dt className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</dt>
                         <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                            <ReactMarkdown>{value}</ReactMarkdown>
+                            {value.includes('<span') ? (
+                                // Render HTML content with special formatting
+                                <div dangerouslySetInnerHTML={{ __html: value }} />
+                            ) : (
+                                // Render markdown content normally
+                                <ReactMarkdown>{value}</ReactMarkdown>
+                            )}
                         </dd>
                     </div>
                 ))}

@@ -150,7 +150,7 @@ export default function App(): React.ReactNode {
       );
     }
 
-    const idleText = "Ready for analysis. Please upload an RFP document to begin.";
+    const idleText = "Ready for analysis. Please upload a PDF file to begin.";
     const processingText = `Processing "${pdfName}"...`;
     const analyzingText = `Analyzing "${pdfName}" with AI... This may take a moment.`;
     
@@ -171,7 +171,7 @@ export default function App(): React.ReactNode {
       <header className="flex items-center justify-between p-4 border-b border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
         <div className="flex items-center space-x-3">
           <HeaderIcon />
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">RFP Analyser AI</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Document Analysis Agent</h1>
         </div>
       </header>
       
