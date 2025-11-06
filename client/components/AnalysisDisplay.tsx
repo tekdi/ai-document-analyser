@@ -3,6 +3,7 @@ import type { AnalysisResult, Message } from '../types';
 import { ChatInterface } from './ChatInterface';
 import { ListChecksIcon, ClipboardListIcon, AlertTriangleIcon, MessageSquareIcon, SearchIcon } from './icons';
 import ReactMarkdown from 'react-markdown';
+import { SmartRenderer } from './SmartRenderer';
 
 interface AnalysisDisplayProps {
     analysisResult: AnalysisResult;
@@ -52,10 +53,10 @@ const processSpecialFormatting = (text: string): string => {
 
 const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | undefined }> = ({ summary, summarySection }) => {
     const topics = summarySection?.topics || [];
-    
+
     // Check if we have individual topic keys or a combined fallback
     const hasIndividualTopics = topics.some(topic => summary?.[topic.key]);
-    
+
     if (!hasIndividualTopics && summary?.combined) {
         // Fallback: display the combined summary as single content block
         return (
@@ -66,57 +67,56 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
             </div>
         );
     }
-    
-    // Standard individual topic display
+
+    // Standard individual topic display with SmartRenderer
     const entries = topics
         .map(topic => {
             const rawValue = summary?.[topic.key];
-            let displayValue = '';
-            
+            let value = null;
+            let pages = null;
+            let hasSpecialFormatting = false;
+
             if (typeof rawValue === 'string') {
-                displayValue = rawValue;
-            } else if (rawValue && typeof rawValue === 'object') {
-                // Handle new structured format with value and page_numbers
-                if (rawValue.value) {
-                    if (typeof rawValue.value === 'string') {
-                        displayValue = processSpecialFormatting(rawValue.value);
-                    } else if (Array.isArray(rawValue.value)) {
-                        // Format arrays as markdown bullet lists
-                        displayValue = rawValue.value.map(item => {
-                            if (typeof item === 'object' && item.event && item.date) {
-                                // Special formatting for key dates with page numbers
-                                let dateText = `- **${item.event}**: ${item.date}`;
-                                if (item.page_numbers && Array.isArray(item.page_numbers)) {
-                                    dateText += ` *(Page ${item.page_numbers.join(', ')})*`;
-                                }
-                                return dateText;
-                            } else if (typeof item === 'string') {
-                                return `- ${processSpecialFormatting(item)}`;
-                            } else {
-                                return `- ${JSON.stringify(item)}`;
-                            }
-                        }).join('\n');
-                    } else {
-                        // Other object types
-                        displayValue = JSON.stringify(rawValue.value, null, 2);
-                    }
-                    
-                    // Add page references if available
-                    if (rawValue.page_numbers && Array.isArray(rawValue.page_numbers)) {
-                        displayValue += `\n\n*Found on pages: ${rawValue.page_numbers.join(', ')}*`;
-                    }
-                } else {
-                    // Fallback for other object structures
-                    displayValue = JSON.stringify(rawValue, null, 2);
+                // Simple string value
+                const processed = processSpecialFormatting(rawValue);
+                hasSpecialFormatting = processed.includes('<span');
+                value = processed;
+            } else if (rawValue && typeof rawValue === 'object' && rawValue.value !== undefined) {
+                // Structured format with value and page_numbers
+                value = rawValue.value;
+                pages = rawValue.page_numbers;
+
+                // Apply special formatting to string values or string arrays
+                if (typeof value === 'string') {
+                    const processed = processSpecialFormatting(value);
+                    hasSpecialFormatting = processed.includes('<span');
+                    value = processed;
+                } else if (Array.isArray(value)) {
+                    value = value.map(item => {
+                        if (typeof item === 'string') {
+                            return processSpecialFormatting(item);
+                        }
+                        return item;
+                    });
                 }
             }
-            
+
             return {
                 label: topic.label,
-                value: displayValue
+                value: value,
+                pages: pages,
+                hasSpecialFormatting: hasSpecialFormatting,
+                topicKey: topic.key
             };
         })
-        .filter(entry => entry.value && entry.value.trim() !== '' && entry.value.toLowerCase() !== 'not specified');
+        .filter(entry => {
+            if (!entry.value) return false;
+            if (typeof entry.value === 'string') {
+                const trimmed = entry.value.trim();
+                return trimmed !== '' && trimmed.toLowerCase() !== 'not specified';
+            }
+            return true;
+        });
 
     if (entries.length === 0) {
         return <p className="p-6 text-slate-500 dark:text-slate-400">No summary information could be extracted from the document.</p>;
@@ -125,16 +125,16 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
     return (
         <div className="h-full overflow-y-auto p-6">
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {entries.map(({ label, value }) => (
+                {entries.map(({ label, value, pages, hasSpecialFormatting, topicKey }) => (
                     <div key={label} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md">
-                        <dt className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</dt>
-                        <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                            {value.includes('<span') ? (
+                        <dt className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-2">{label}</dt>
+                        <dd className="mt-1 text-sm text-slate-900 dark:text-slate-100">
+                            {hasSpecialFormatting ? (
                                 // Render HTML content with special formatting
                                 <div dangerouslySetInnerHTML={{ __html: value }} />
                             ) : (
-                                // Render markdown content normally
-                                <ReactMarkdown>{value}</ReactMarkdown>
+                                // Use SmartRenderer for all other content
+                                <SmartRenderer value={value} pages={pages} topicKey={topicKey} />
                             )}
                         </dd>
                     </div>
