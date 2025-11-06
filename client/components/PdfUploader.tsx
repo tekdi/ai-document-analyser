@@ -59,6 +59,10 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       onFileUpload(event.target.files[0], selectedType, selectedModel);
+      // Reset input value to allow uploading the same file again
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
     }
   };
 
@@ -82,6 +86,10 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onFileUpload, status, 
 
       if (allowedTypes.includes(file.type) || ['md', 'txt', 'csv'].includes(fileExtension || '')) {
         onFileUpload(file, selectedType, selectedModel);
+        // Reset input value to allow uploading the same file again
+        if (inputRef.current) {
+          inputRef.current.value = '';
+        }
       }
     }
   }, [onFileUpload, handleDragEvents, selectedType, selectedModel]);
