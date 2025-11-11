@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Message } from '../types';
 import { MessageAuthor } from '../types';
 import { SendIcon, UserIcon, AiIcon, SpinnerIcon } from './icons';
+import { CopyButton } from './CopyButton';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -10,6 +11,20 @@ interface ChatInterfaceProps {
   isAnswering: boolean;
   isReady: boolean;
 }
+
+// Helper function to convert chat messages to markdown
+const chatToMarkdown = (messages: Message[]): string => {
+  if (messages.length === 0) {
+    return 'No conversation yet.';
+  }
+
+  return messages
+    .map(msg => {
+      const prefix = msg.author === MessageAuthor.USER ? '**Question:**' : '**Answer:**';
+      return `${prefix}\n\n${msg.text}`;
+    })
+    .join('\n\n---\n\n');
+};
 
 const ChatMessage: React.FC<{ message: Message }> = ({ message }) => {
   const isUser = message.author === MessageAuthor.USER;
@@ -41,7 +56,7 @@ const ChatMessage: React.FC<{ message: Message }> = ({ message }) => {
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onQuestionSubmit, isAnswering, isReady }) => {
   const [question, setQuestion] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -56,8 +71,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onQuesti
     }
   };
 
+  const markdown = chatToMarkdown(messages);
+
   return (
     <div className="flex flex-col h-full">
+      {messages.length > 0 && (
+        <div className="flex-shrink-0 px-6 pt-4 pb-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex justify-end">
+            <CopyButton content={markdown} label="Copy Conversation" />
+          </div>
+        </div>
+      )}
       <div ref={chatContainerRef} className="flex-grow p-6 space-y-6 overflow-y-auto">
         {messages.map((msg) => (
           <ChatMessage key={msg.id} message={msg} />
