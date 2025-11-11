@@ -4,6 +4,7 @@ import { ChatInterface } from './ChatInterface';
 import { ListChecksIcon, ClipboardListIcon, AlertTriangleIcon, MessageSquareIcon, SearchIcon } from './icons';
 import ReactMarkdown from 'react-markdown';
 import { SmartRenderer } from './SmartRenderer';
+import { CopyButton } from './CopyButton';
 
 interface AnalysisDisplayProps {
     analysisResult: AnalysisResult;
@@ -42,13 +43,86 @@ const iconMap: Record<string, React.FC> = {
 // Helper function to process special formatting markers
 const processSpecialFormatting = (text: string): string => {
     if (typeof text !== 'string') return text;
-    
+
     // Convert (FLASH_RED) and similar markers to HTML with red styling
     return text
         .replace(/\(FLASH_RED\)/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️</span>')
         .replace(/\(RED_FLASHING\)/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️</span>')
         .replace(/flash it in red color/gi, '<span style="color: #ef4444; font-weight: bold;">⚠️ ATTENTION</span>')
         .replace(/show it in Red Flashing color/gi, '<span style="color: #ef4444; font-weight: bold; animation: blink 1s infinite;">⚠️ ATTENTION</span>');
+};
+
+// Helper function to convert value to plain text for markdown
+const valueToMarkdownText = (value: any): string => {
+    if (typeof value === 'string') {
+        // Remove HTML tags for markdown export
+        return value.replace(/<[^>]*>/g, '').trim();
+    }
+    if (Array.isArray(value)) {
+        // Handle arrays - check if they're objects or simple strings
+        if (value.length === 0) return 'N/A';
+        if (typeof value[0] === 'string') {
+            return value.map(item => `- ${item}`).join('\n');
+        }
+        // Handle array of objects (events, dates, etc.)
+        return value.map(item => {
+            if (typeof item === 'object') {
+                return Object.entries(item)
+                    .filter(([key]) => key !== 'page_numbers')
+                    .map(([key, val]) => `  - ${key}: ${val}`)
+                    .join('\n');
+            }
+            return `- ${item}`;
+        }).join('\n');
+    }
+    if (typeof value === 'object' && value !== null) {
+        // Handle objects
+        return Object.entries(value)
+            .filter(([key]) => key !== 'page_numbers')
+            .map(([key, val]) => `- ${key}: ${val}`)
+            .join('\n');
+    }
+    return String(value);
+};
+
+// Helper function to convert summary to markdown
+const summaryToMarkdown = (summary: any, topics: any[]): string => {
+    if (!summary) return '';
+
+    // Check for combined fallback
+    if (summary.combined) {
+        return `# Summary\n\n${summary.combined}`;
+    }
+
+    // Build markdown from topics
+    const sections = topics
+        .map(topic => {
+            const rawValue = summary[topic.key];
+            if (!rawValue) return null;
+
+            let value = null;
+            if (typeof rawValue === 'string') {
+                value = rawValue;
+            } else if (rawValue && typeof rawValue === 'object' && rawValue.value !== undefined) {
+                value = rawValue.value;
+            } else {
+                value = rawValue;
+            }
+
+            // Skip empty values
+            if (!value) return null;
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (trimmed === '' || trimmed.toLowerCase() === 'not specified') return null;
+            }
+
+            const markdownValue = valueToMarkdownText(value);
+            return `## ${topic.label}\n\n${markdownValue}`;
+        })
+        .filter(Boolean)
+        .join('\n\n');
+
+    return sections || 'No summary information available.';
 };
 
 const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | undefined }> = ({ summary, summarySection }) => {
@@ -59,8 +133,12 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
 
     if (!hasIndividualTopics && summary?.combined) {
         // Fallback: display the combined summary as single content block
+        const markdown = summaryToMarkdown(summary, topics);
         return (
             <div className="h-full overflow-y-auto p-6">
+                <div className="flex justify-end mb-4">
+                    <CopyButton content={markdown} label="Copy Summary" />
+                </div>
                 <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-li:my-1 whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{summary.combined}</ReactMarkdown>
                 </div>
@@ -122,8 +200,13 @@ const SummaryContent: React.FC<{ summary: any; summarySection: SectionConfig | u
         return <p className="p-6 text-slate-500 dark:text-slate-400">No summary information could be extracted from the document.</p>;
     }
 
+    const markdown = summaryToMarkdown(summary, topics);
+
     return (
         <div className="h-full overflow-y-auto p-6">
+            <div className="flex justify-end mb-4">
+                <CopyButton content={markdown} label="Copy Summary" />
+            </div>
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {entries.map(({ label, value, pages, hasSpecialFormatting, topicKey }) => (
                     <div key={label} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md">
