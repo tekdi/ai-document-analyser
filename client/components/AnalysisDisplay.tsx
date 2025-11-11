@@ -231,8 +231,15 @@ const TextContent: React.FC<{ title: string, text: string }> = ({ title, text })
     if (!text || text.trim() === '') {
         return <p className="p-6 text-slate-500 dark:text-slate-400">No information about {title.toLowerCase()} could be extracted from the document.</p>;
     }
+
+    // Format markdown for copy with title as header
+    const markdown = `# ${title}\n\n${text}`;
+
     return (
         <div className="h-full overflow-y-auto p-6">
+            <div className="flex justify-end mb-4">
+                <CopyButton content={markdown} label={`Copy ${title}`} />
+            </div>
             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-li:my-1 whitespace-pre-wrap leading-relaxed">
                 <ReactMarkdown>{text}</ReactMarkdown>
             </div>
